@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>휘매쓰 연산 챌린지!</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f9fafc;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: linear-gradient(90deg, #6a5acd, #9370db);
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .difficulty-selection, .question-container, .final-screen {
+    text-align: center;
+  }
+
+  .difficulty-btn {
+    display: inline-block;
+    margin: 10px;
+    padding: 15px 30px;
+    border-radius: 5px;
+    background: #9370db;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.2em;
+    text-decoration: none;
+    border: none;
+  }
+
+  .difficulty-btn:hover {
+    background: #6a5acd;
+  }
+
+  .score-display, .lives-display, .total-time-display {
+    margin: 10px;
+    font-weight: bold;
+  }
+
+  .energy-bar-container {
+    width: 100%;
+    background: #ccc;
+    height: 20px;
+    border-radius: 5px;
+    margin: 20px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .energy-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6347, #ff4500);
+    width: 100%;
+    transition: width 0.5s linear;
+  }
+
+  .answers {
+    margin: 20px 0;
+  }
+
+  .answer-btn {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    border-radius: 5px;
+    background: #e6e6fa;
+    cursor: pointer;
+    font-size: 1.1em;
+    width: 80%;
+    max-width: 300px;
+    border: none;
+  }
+
+  .answer-btn:hover {
+    background: #d8bfd8;
+  }
+
+  .input-answer {
+    margin: 20px 0;
+  }
+
+  .input-answer input {
+    padding: 10px;
+    font-size: 1.1em;
+    width: 60%;
+    max-width: 300px;
+  }
+
+  .submit-btn {
+    margin-top: 10px;
+    background: #9370db;
+    color: #fff;
+  }
+
+  .submit-btn:hover {
+    background: #6a5acd;
+  }
+
+  .final-screen h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+  }
+
+  .final-screen p {
+    margin: 10px 0;
+  }
+
+  .message-area {
+    margin: 20px 0;
+    font-weight: bold;
+    color: red;
+    min-height: 40px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+<script>
+// 모든 문제 데이터 (절대 생략, 변형 금지), 문제와 보기의 분수표현을 \\frac{}{}로.
+// 또한 문제 내 분수표현도 \frac 형태로 수정.
+// 팝업(alert) 대신 화면에 정답 메세지를 띄우고 MathJax 렌더링.
+
+var allQuestions = [
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"3 \\times x",
+   correct:"3x",
+   distractors:["\\frac{3}{x}","\\frac{x}{3}","x+3"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\times 0.05",
+   correct:"0.05x",
+   distractors:["x0.5","\\frac{x}{0.05}","0.5x"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(-1) \\times a",
+   correct:"-a",
+   distractors:["a-1","\\frac{1}{a}","-\\frac{1}{a}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"\\left(\\frac{3}{5}\\right) \\times x",
+   correct:"\\frac{3x}{5}",
+   distractors:["\\frac{5x}{3}","\\frac{3}{5x}","\\frac{3}{5}+x"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\times 0.01",
+   correct:"0.01x",
+   distractors:["\\frac{x}{0.01}","0.1x","0x.01"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times b",
+   correct:"ab",
+   distractors:["\\frac{a}{b}","\\frac{b}{a}","a+b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"b \\times a",
+   correct:"ab",
+   distractors:["a+b","\\frac{b}{a}","a-b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times (-1)",
+   correct:"-a",
+   distractors:["a+(-1)","-\\frac{1}{a}","-1a+1"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\times x",
+   correct:"x^{2}",
+   distractors:["2x","xx^{2}","x"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"5 \\times x",
+   correct:"5x",
+   distractors:["\\frac{x}{5}","x+5","\\frac{5}{x}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\times (-2)",
+   correct:"-2x",
+   distractors:["x-2","\\frac{2}{x}","-\\frac{x}{2}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times \\frac{3}{4} \\times b",
+   correct:"\\frac{3ab}{4}",
+   distractors:["\\frac{4ab}{3}","\\frac{3}{4ab}","\\frac{3}{4a}+b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"\\left(-\\frac{1}{5}\\right) \\times y \\times x",
+   correct:"-\\frac{xy}{5}",
+   distractors:["\\frac{x+y}{5}","-\\frac{x}{5y}","(-1)xy5"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times 2 \\times b",
+   correct:"2ab",
+   distractors:["\\frac{a}{2b}","\\frac{2}{ab}","\\frac{2a}{b}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"0.1 \\times x \\times y",
+   correct:"0.1xy",
+   distractors:["\\frac{x}{0.1y}","\\frac{xy}{0.1}","0.01xy"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times a \\times a \\times a",
+   correct:"a^{4}",
+   distractors:["4a","a^{3}","a^{2}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times a \\times b \\times b \\times b",
+   correct:"a^{2}b^{3}",
+   distractors:["a^{3}b^{2}","ab^{5}","a^{2}b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\times x \\times x \\times (-1)",
+   correct:"-x^{3}",
+   distractors:["x^{3}","-x","-x^{4}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"y \\times (-3) \\times x \\times x",
+   correct:"-3x^{2}y",
+   distractors:["3x^{2}y","-3xy^{2}","-\\frac{3x^{2}}{y}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"7 \\times a \\times a \\times a \\times b \\times b \\times b",
+   correct:"7a^{3}b^{3}",
+   distractors:["7a^{2}b^{3}","7a^{3}b^{2}","a^{3}b^{3}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\times a \\times a \\times b \\times b \\times (-5)",
+   correct:"-5a^{3}b^{2}",
+   distractors:["5a^{2}b^{3}","-5a^{2}b^{3}","-5a^{3}b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div 3",
+   correct:"\\frac{x}{3}",
+   distractors:["\\frac{3}{x}","x3","x-3"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div (-3)",
+   correct:"-\\frac{x}{3}",
+   distractors:["\\frac{x}{3}","-\\frac{3}{x}","x-3"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div 5",
+   correct:"\\frac{x}{5}",
+   distractors:["\\frac{5}{x}","(x-5)","x5"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div (-4)",
+   correct:"-\\frac{a}{4}",
+   distractors:["-\\frac{4}{a}","\\frac{a}{4}","a-4"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(-8) \\div y",
+   correct:"-\\frac{8}{y}",
+   distractors:["\\frac{8}{-y}","-\\frac{y}{8}","(-8y)"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"3b \\div 20",
+   correct:"\\frac{3b}{20}",
+   distractors:["\\frac{20}{3b}","\\frac{3}{20b}","\\frac{3+b}{20}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div b",
+   correct:"\\frac{a}{b}",
+   distractors:["\\frac{b}{a}","a-b","ab"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div (-1)",
+   correct:"-x",
+   distractors:["x-1","1-x","x+1"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div (-2)",
+   correct:"-\\frac{a}{2}",
+   distractors:["a-2","-\\frac{2}{a}","a2"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div y \\div z",
+   correct:"\\frac{x}{yz}",
+   distractors:["xyz","\\frac{y}{xz}","\\frac{x}{y/z}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div 5 \\div b",
+   correct:"\\frac{a}{5b}",
+   distractors:["a(5b)","\\frac{5}{ab}","\\frac{a}{b/5}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div 3 \\div b",
+   correct:"\\frac{a}{3b}",
+   distractors:["\\frac{3}{ab}","\\frac{a}{3/b}","a3b"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div (-2) \\div (-b)",
+   correct:"\\frac{a}{2b}",
+   distractors:["\\frac{a}{-2b}","-\\frac{a}{2b}","\\frac{2b}{a}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"u \\times (-2) \\times b + c",
+   correct:"-2ub + c",
+   distractors:["\\frac{2u}{b+c}","-\\frac{2u}{b}+c","-2u(bc)"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(x+y) \\times 3 \\times a",
+   correct:"3a(x+y)",
+   distractors:["\\frac{x+y}{3a}","\\frac{3}{a(x+y)}","3(x+y)+a"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"2 \\div (x−y)",
+   correct:"\\frac{2}{x−y}",
+   distractors:["\\frac{x−y}{2}","2(x−y)","2−(x−y)"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(2x+y) \\div (7a−b)",
+   correct:"\\frac{2x+y}{7a−b}",
+   distractors:["\\frac{7a−b}{2x+y}","(2x+y)(7a−b)","(2x+y)−(7a−b)"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div 3 − y \\div 4",
+   correct:"\\frac{x}{3}−\\frac{y}{4}",
+   distractors:["\\frac{3}{x}−\\frac{4}{y}","\\frac{x−y}{12}","\\frac{x}{3y/4}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(x+y) \\div (a−b)",
+   correct:"\\frac{x+y}{a−b}",
+   distractors:["\\frac{a−b}{x+y}","x+y−a+b","(x+y)(a−b)"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"(x−y) \\div 7",
+   correct:"\\frac{x−y}{7}",
+   distractors:["\\frac{7}{x−y}","(x−y)*7","\\frac{x−7}{y}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div 3 + b",
+   correct:"\\frac{a}{3}+b",
+   distractors:["\\frac{3}{a}+b","a+3b","\\frac{a}{3+b}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"a \\div b \\times c",
+   correct:"\\frac{ac}{b}",
+   distractors:["\\frac{a}{bc}","\\frac{ab}{c}","\\frac{a}{(b/c)}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"x \\div (y \\div z)",
+   correct:"\\frac{xz}{y}",
+   distractors:["\\frac{x}{yz}","xyz","\\frac{x}{(z/y)}"]},
+
+  {instruction:"다음 식의 곱셈, 나눗셈 기호를 생략하여 간단히 나타내어라.", expression:"2 \\div (a+b) \\times c",
+   correct:"\\frac{2c}{a+b}",
+   distractors:["\\frac{2}{c(a+b)}","\\frac{a+b}{2c}","\\frac{2}{a+b+c}"]}
+];
+
+// 문제를 랜덤 섞기
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+var shuffledQuestions = shuffleArray(allQuestions.slice());
+var numQuestions = shuffledQuestions.length;
+
+// 첫 15문제: 4지선다, 다음 15문제: 2지선다, 마지막 15문제: 주관식
+for (let i=0; i<numQuestions; i++){
+  if (i<15) {
+    shuffledQuestions[i].qtype = '4-choice';
+  } else if (i<30) {
+    shuffledQuestions[i].qtype = '2-choice';
+  } else {
+    shuffledQuestions[i].qtype = 'fill-in';
+  }
+}
+
+var difficulty = null;
+var baseTime = 0;
+var scorePerCorrect = 0;
+var totalTime = 0; 
+var gameInterval = null;
+var questionIndex = 0;
+var lives = 3;
+var score = 0;
+var currentTimer = 0;
+var maxTime = 0;
+var energyInterval = null;
+var showingMessage = false;
+
+function startGame(diff) {
+  difficulty = diff;
+  if (diff === 'hardest') {
+    baseTime = 20;
+    scorePerCorrect = 20;
+  } else if (diff === 'hard') {
+    baseTime = 30;
+    scorePerCorrect = 15;
+  } else if (diff === 'medium') {
+    baseTime = 40;
+    scorePerCorrect = 13;
+  } else {
+    baseTime = 0; 
+    scorePerCorrect = 10;
+  }
+
+  document.querySelector('.difficulty-selection').classList.add('hidden');
+  document.querySelector('.score-display').textContent = "점수: 0";
+  document.querySelector('.lives-display').textContent = "남은 기회: 3";
+  document.querySelector('.total-time-display').textContent = "총 경과 시간: 0초";
+  document.querySelector('.question-container').classList.remove('hidden');
+  startTimers();
+  showQuestion();
+}
+
+function startTimers() {
+  gameInterval = setInterval(function(){
+    totalTime++;
+    document.querySelector('.total-time-display').textContent = "총 경과 시간: " + totalTime + "초";
+  },1000);
+}
+
+function startEnergyBar() {
+  if (baseTime === 0) {
+    document.querySelector('.energy-bar-container').classList.add('hidden');
+    return;
+  }
+  document.querySelector('.energy-bar-container').classList.remove('hidden');
+  maxTime = baseTime;
+  currentTimer = baseTime;
+  document.querySelector('.energy-bar').style.width = "100%";
+  energyInterval = setInterval(function(){
+    currentTimer--;
+    var perc = (currentTimer/maxTime)*100;
+    document.querySelector('.energy-bar').style.width = perc+"%";
+    if (currentTimer<=0) {
+      clearInterval(energyInterval);
+      handleWrongAnswerTime();
+    }
+  },1000);
+}
+
+function stopEnergyBar() {
+  if (energyInterval) clearInterval(energyInterval);
+}
+
+function showQuestion() {
+  if (questionIndex >= shuffledQuestions.length) {
+    // 모든 문제 끝 -> 다시 섞어서 무한 반복
+    shuffledQuestions = shuffleArray(allQuestions.slice());
+    questionIndex = 0;
+  }
+
+  showingMessage = false;
+  document.querySelector('.message-area').innerHTML = "";
+  var q = shuffledQuestions[questionIndex];
+  document.querySelector('.question-text').innerHTML = q.instruction + "<br><br> \\(" + q.expression + "\\)";
+  
+  var answersDiv = document.querySelector('.answers');
+  answersDiv.innerHTML = "";
+  var inputAnswerDiv = document.querySelector('.input-answer');
+  inputAnswerDiv.innerHTML = "";
+  inputAnswerDiv.classList.add('hidden');
+
+  var correct = q.correct;
+  var dist = q.distractors.slice();
+  
+  if (q.qtype === '4-choice') {
+    var choices = dist.slice();
+    choices.push(correct);
+    shuffleArray(choices);
+    for (let i=0; i<4; i++) {
+      let btn = document.createElement('button');
+      btn.classList.add('answer-btn');
+      btn.innerHTML = "\\(" + choices[i] + "\\)";
+      btn.onclick = function() {checkAnswer(choices[i] === correct, correct);};
+      answersDiv.appendChild(btn);
+    }
+  } else if (q.qtype === '2-choice') {
+    shuffleArray(dist);
+    var pickDist = dist[0];
+    var choices = [correct, pickDist];
+    shuffleArray(choices);
+    for (let i=0; i<2; i++) {
+      let btn = document.createElement('button');
+      btn.classList.add('answer-btn');
+      btn.innerHTML = "\\(" + choices[i] + "\\)";
+      btn.onclick = function() {checkAnswer(choices[i] === correct, correct);};
+      answersDiv.appendChild(btn);
+    }
+  } else {
+    inputAnswerDiv.classList.remove('hidden');
+    inputAnswerDiv.innerHTML = '<input type="text" placeholder="정답 입력" /> <br><button class="answer-btn submit-btn">제출</button>';
+    var submitBtn = inputAnswerDiv.querySelector('button');
+    var inputField = inputAnswerDiv.querySelector('input');
+    submitBtn.onclick = function(){
+      var val = inputField.value.trim();
+      checkAnswer(val === correct, correct);
+    };
+  }
+
+  MathJax.typesetPromise();
+  stopEnergyBar();
+  startEnergyBar();
+}
+
+function handleWrongAnswerTime() {
+  lives--;
+  showingMessage = true;
+  document.querySelector('.lives-display').textContent = "남은 기회: " + lives;
+  document.querySelector('.message-area').innerHTML = "시간 초과! 오답 처리됩니다.";
+  MathJax.typesetPromise();
+  if (lives <=0) {
+    setTimeout(endGame,1500);
+  } else {
+    questionIndex++;
+    setTimeout(showQuestion,1500);
+  }
+}
+
+function checkAnswer(isCorrect, correctAnswer) {
+  if (showingMessage) return;
+  stopEnergyBar();
+  if (isCorrect) {
+    score += scorePerCorrect;
+    document.querySelector('.score-display').textContent = "점수: " + score;
+    questionIndex++;
+    showQuestion();
+  } else {
+    lives--;
+    showingMessage = true;
+    document.querySelector('.lives-display').textContent = "남은 기회: " + lives;
+    document.querySelector('.message-area').innerHTML = "오답! 정답은: \\(" + correctAnswer + "\\)";
+    MathJax.typesetPromise();
+    if (lives <=0) {
+      setTimeout(endGame,1500);
+    } else {
+      questionIndex++;
+      setTimeout(showQuestion,1500);
+    }
+  }
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  stopEnergyBar();
+  document.querySelector('.question-container').classList.add('hidden');
+  document.querySelector('.final-screen').classList.remove('hidden');
+  document.querySelector('.final-screen .final-score').textContent = "최종 점수: " + score;
+  document.querySelector('.final-screen .final-time').textContent = "총 경과 시간: " + totalTime + "초";
+}
+</script>
+</head>
+<body>
+<header>휘매쓰 연산 챌린지!</header>
+<div class="container">
+  <div class="difficulty-selection">
+    <p>난이도를 선택하세요:</p>
+    <button class="difficulty-btn" onclick="startGame('hardest')">최상(20초 제한, 문제당20점)</button>
+    <button class="difficulty-btn" onclick="startGame('hard')">상(30초 제한, 문제당15점)</button>
+    <button class="difficulty-btn" onclick="startGame('medium')">중(40초 제한, 문제당13점)</button>
+    <button class="difficulty-btn" onclick="startGame('easy')">하(시간제한 없음, 문제당10점)</button>
+  </div>
+
+  <div class="question-container hidden">
+    <div class="score-display"></div>
+    <div class="lives-display"></div>
+    <div class="total-time-display"></div>
+    <div class="energy-bar-container">
+      <div class="energy-bar"></div>
+    </div>
+    <div class="question-text"></div>
+    <div class="message-area"></div>
+    <div class="answers"></div>
+    <div class="input-answer hidden"></div>
+  </div>
+
+  <div class="final-screen hidden">
+    <h2>게임 종료!</h2>
+    <p class="final-score"></p>
+    <p class="final-time"></p>
+    <p><button class="difficulty-btn" onclick="location.reload()">다시 시작</button></p>
+  </div>
+</div>
+</body>
+</html>
